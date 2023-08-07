@@ -1,121 +1,9 @@
 # 6.00
 # Problem Set 5 Test Suite
-
-from mtTkinter import *
-from datetime import datetime
-import pytz
 import unittest
 from ps5 import *
 from datetime import timedelta
 
-def process(url):
-    """
-    Fetches news items from the rss url and parses them.
-    Returns a list of NewsStory-s.
-    """
-    feed = feedparser.parse(url)
-    entries = feed.entries
-    ret = []
-    for entry in entries:
-        guid = entry.guid
-        title = translate_html(entry.title)
-        link = entry.link
-        description = translate_html(entry.description)
-        pubdate = translate_html(entry.published)
-
-        try:
-            pubdate = datetime.strptime(pubdate, "%a, %d %b %Y %H:%M:%S %Z")
-            pubdate.replace(tzinfo=pytz.timezone("GMT"))
-        #  pubdate = pubdate.astimezone(pytz.timezone('EST'))
-        #  pubdate.replace(tzinfo=None)
-        except ValueError:
-            pubdate = datetime.strptime(pubdate, "%a, %d %b %Y %H:%M:%S %z")
-
-        newsStory = NewsStory(guid, title, description, link, pubdate)
-        ret.append(newsStory)
-    return ret
-
-
-# ======================
-# Data structure design
-# ======================
-
-# Problem 1
-
-# TODO: NewsStory
-
-
-class NewsStory:
-    def __init__(self, guid, title, description, link, pubdate):
-        self.guid = guid
-        self.title = title
-        self.description = description
-        self.link = link
-        self.pubdate = pubdate
-
-    def get_guid(self):
-        return self.guid
-
-    def get_title(self):
-        return self.title
-
-    def get_description(self):
-        return self.description
-
-    def get_link(self):
-        return self.link
-
-    def get_pubdate(self):
-        return self.pubdate
-
-
-# ======================
-# Triggers
-# ======================
-
-class Trigger(object):
-    def evaluate(self, story):
-        """
-        Returns True if an alert should be generated
-        for the given news item, or False otherwise.
-        """
-        # DO NOT CHANGE THIS!
-        raise NotImplementedError
-
-
-# PHRASE TRIGGERS
-
-# Problem 2
-# TODO: PhraseTrigger
-
-class PhraseTrigger:
-    def __init__(self, phrase):
-        phrase = phrase.lower()
-        self.phrase = phrase
-
-    def is_phrase_in(self, text):
-        new_phrase = self.phrase.split(' ')
-        new_text = text.split(' ')
-        if all(w in new_text for w in new_phrase):
-            return True
-        else:
-            return False
-        # Problem 3
-
-
-# TODO: TitleTrigger
-
-class TitleTrigger(PhraseTrigger):
-    def evaluate(self, story):
-        return self.is_phrase_in(story.get_title())
-
-
-# Problem 4
-# TODO: DescriptionTrigger
-
-class DescriptionTrigger(PhraseTrigger):
-    def evaluate(self, story):
-        return self.is_phrase_in(story.get_description())
 
 class ProblemSet5NewsStory(unittest.TestCase):
     def setUp(self):
@@ -186,7 +74,7 @@ class ProblemSet5(unittest.TestCase):
             self.assertTrue(trig.evaluate(spaces), "TitleTrigger failed to fire when the words were separated by multiple spaces.")
             self.assertTrue(trig.evaluate(caps), "TitleTrigger failed to fire when the phrase appeared with both uppercase and lowercase letters.")
             self.assertTrue(trig.evaluate(exact), "TitleTrigger failed to fire when the words in the phrase were the only words in the title.")
-
+            
             self.assertFalse(trig.evaluate(plural), "TitleTrigger fired when the words in the phrase were contained within other words.")
             self.assertFalse(trig.evaluate(separate), "TitleTrigger fired when the words in the phrase were separated by other words.")
             self.assertFalse(trig.evaluate(brown), "TitleTrigger fired when only part of the phrase was found.")
@@ -218,142 +106,142 @@ class ProblemSet5(unittest.TestCase):
             self.assertTrue(trig.evaluate(spaces), "DescriptionTrigger failed to fire when the words were separated by multiple spaces.")
             self.assertTrue(trig.evaluate(caps), "DescriptionTrigger failed to fire when the phrase appeared with both uppercase and lowercase letters.")
             self.assertTrue(trig.evaluate(exact), "DescriptionTrigger failed to fire when the words in the phrase were the only words in the description.")
-
+            
             self.assertFalse(trig.evaluate(plural), "DescriptionTrigger fired when the words in the phrase were contained within other words.")
             self.assertFalse(trig.evaluate(separate), "DescriptionTrigger fired when the words in the phrase were separated by other words.")
             self.assertFalse(trig.evaluate(brown), "DescriptionTrigger fired when only part of the phrase was found.")
             self.assertFalse(trig.evaluate(badorder), "DescriptionTrigger fired when the words in the phrase appeared out of order.")
             self.assertFalse(trig.evaluate(nospaces), "DescriptionTrigger fired when words were not separated by spaces or punctuation.")
             self.assertFalse(trig.evaluate(nothing), "DescriptionTrigger fired when none of the words in the phrase appeared.")
-#
-#     def test3altBeforeAndAfterTrigger(self):
-#
-#         dt = timedelta(seconds=5)
-#         now = datetime(2016, 10, 12, 23, 59, 59)
-#         now = now.replace(tzinfo=pytz.timezone("EST"))
-#
-#         ancient_time = datetime(1987, 10, 15)
-#         ancient_time = ancient_time.replace(tzinfo=pytz.timezone("EST"))
-#         ancient = NewsStory('', '', '', '', ancient_time)
-#
-#         just_now = NewsStory('', '', '', '', now - dt)
-#         in_a_bit = NewsStory('', '', '', '', now + dt)
-#
-#         future_time = datetime(2087, 10, 15)
-#         future_time = future_time.replace(tzinfo=pytz.timezone("EST"))
-#         future = NewsStory('', '', '', '', future_time)
-#
-#
-#         s1 = BeforeTrigger('12 Oct 2016 23:59:59')
-#         s2 = AfterTrigger('12 Oct 2016 23:59:59')
-#
-#         self.assertTrue(s1.evaluate(ancient), "BeforeTrigger failed to fire on news from long ago")
-#         self.assertTrue(s1.evaluate(just_now), "BeforeTrigger failed to fire on news happened right before specified time")
-#
-#         self.assertFalse(s1.evaluate(in_a_bit), "BeforeTrigger fired to fire on news happened right after specified time")
-#         self.assertFalse(s1.evaluate(future), "BeforeTrigger fired to fire on news from the future")
-#
-#         self.assertFalse(s2.evaluate(ancient), "AfterTrigger fired to fire on news from long ago")
-#         self.assertFalse(s2.evaluate(just_now), "BeforeTrigger fired to fire on news happened right before specified time")
-#
-#         self.assertTrue(s2.evaluate(in_a_bit), "AfterTrigger failed to fire on news just after specified time")
-#         self.assertTrue(s2.evaluate(future), "AfterTrigger failed to fire on news from long ago")
-#
-#     def test3BeforeAndAfterTrigger(self):
-#
-#         dt = timedelta(seconds=5)
-#         now = datetime(2016, 10, 12, 23, 59, 59)
-#         ancient = NewsStory('', '', '', '', datetime(1987, 10, 15))
-#         just_now = NewsStory('', '', '', '', now - dt)
-#         in_a_bit = NewsStory('', '', '', '', now + dt)
-#         future = NewsStory('', '', '', '', datetime(2087, 10, 15))
-#
-#         s1 = BeforeTrigger('12 Oct 2016 23:59:59')
-#         s2 = AfterTrigger('12 Oct 2016 23:59:59')
-#
-#         self.assertTrue(s1.evaluate(ancient), "BeforeTrigger failed to fire on news from long ago")
-#         self.assertTrue(s1.evaluate(just_now), "BeforeTrigger failed to fire on news happened right before specified time")
-#
-#         self.assertFalse(s1.evaluate(in_a_bit), "BeforeTrigger fired to fire on news happened right after specified time")
-#         self.assertFalse(s1.evaluate(future), "BeforeTrigger fired to fire on news from the future")
-#
-#         self.assertFalse(s2.evaluate(ancient), "AfterTrigger fired to fire on news from long ago")
-#         self.assertFalse(s2.evaluate(just_now), "BeforeTrigger fired to fire on news happened right before specified time")
-#
-#         self.assertTrue(s2.evaluate(in_a_bit), "AfterTrigger failed to fire on news just after specified time")
-#         self.assertTrue(s2.evaluate(future), "AfterTrigger failed to fire on news from long ago")
-#
-#     def test4NotTrigger(self):
-#         n = NotTrigger(self.tt)
-#         b = NewsStory("guid", "title", "description", "link", datetime.now())
-#
-#         self.assertFalse(n.evaluate(b), "A NOT trigger applied to 'always true' DID NOT return false")
-#
-#         y = NotTrigger(self.ft)
-#         self.assertTrue(y.evaluate(b), "A NOT trigger applied to 'always false' DID NOT return true")
-#
-#     def test5AndTrigger(self):
-#         yy = AndTrigger(self.tt, self.tt2)
-#         yn = AndTrigger(self.tt, self.ft)
-#         ny = AndTrigger(self.ft, self.tt)
-#         nn = AndTrigger(self.ft, self.ft2)
-#         b = NewsStory("guid", "title", "description", "link", datetime.now())
-#
-#         self.assertTrue(yy.evaluate(b), "AND of 'always true' and 'always true' should be true")
-#         self.assertFalse(yn.evaluate(b), "AND of 'always true' and 'always false' should be false")
-#         self.assertFalse(ny.evaluate(b), "AND of 'always false' and 'always true' should be false")
-#         self.assertFalse(nn.evaluate(b), "AND of 'always false' and 'always false' should be false")
-#
-#     def test6OrTrigger(self):
-#         yy = OrTrigger(self.tt, self.tt2)
-#         yn = OrTrigger(self.tt, self.ft)
-#         ny = OrTrigger(self.ft, self.tt)
-#         nn = OrTrigger(self.ft, self.ft2)
-#         b = NewsStory("guid", "title", "description", "link", datetime.now())
-#
-#         self.assertTrue(yy.evaluate(b), "OR of 'always true' and 'always true' should be true")
-#         self.assertTrue(yn.evaluate(b), "OR of 'always true' and 'always false' should be true")
-#         self.assertTrue(ny.evaluate(b), "OR of 'always false' and 'always true' should be true")
-#         self.assertFalse(nn.evaluate(b), "OR of 'always false' and 'always false' should be false")
-#
-#     def test7FilterStories(self):
-#         tt = TitleTrigger("New York City")
-#         a = NewsStory('', "asfd New York City asfdasdfasdf", '', '', datetime.now())
-#         b = NewsStory('', "asdfasfd new york city! asfdasdfasdf", '', '', datetime.now())
-#         noa = NewsStory('', "something somethingnew york city", '', '', datetime.now())
-#         nob = NewsStory('', "something something new york cities", '', '', datetime.now())
-#
-#         st = DescriptionTrigger("New York City")
-#         a = NewsStory('', '', "asfd New York City asfdasdfasdf", '', datetime.now())
-#         b = NewsStory('', '', "asdfasfd new york city! asfdasdfasdf", '', datetime.now())
-#         noa = NewsStory('', '', "something somethingnew york city", '', datetime.now())
-#         nob = NewsStory('', '', "something something new york cities", '', datetime.now())
-#
-#         triggers = [tt, st, self.tt, self.ft]
-#         stories = [a, b, noa, nob]
-#         filtered_stories = filter_stories(stories, triggers)
-#         for story in stories:
-#             self.assertTrue(story in filtered_stories)
-#         filtered_stories = filter_stories(stories, [self.ft])
-#         self.assertEqual(len(filtered_stories), 0)
-#
-#     def test8FilterStories2(self):
-#         a = NewsStory('', "asfd New York City asfdasdfasdf", '', '', datetime.now())
-#         b = NewsStory('', "asdfasfd new york city! asfdasdfasdf", '', '', datetime.now())
-#         noa = NewsStory('', "something somethingnew york city", '', '', datetime.now())
-#         nob = NewsStory('', "something something new york cities", '', '', datetime.now())
-#
-#         class MatchTrigger(Trigger):
-#             def __init__(self, story):
-#                 self.story = story
-#             def evaluate(self, story):
-#                 return story == self.story
-#         triggers = [MatchTrigger(a), MatchTrigger(nob)]
-#         stories = [a, b, noa, nob]
-#         filtered_stories = filter_stories(stories, triggers)
-#         self.assertTrue(a in filtered_stories)
-#         self.assertTrue(nob in filtered_stories)
-#         self.assertEqual(2, len(filtered_stories))
+
+    def test3altBeforeAndAfterTrigger(self):
+
+        dt = timedelta(seconds=5)
+        now = datetime(2016, 10, 12, 23, 59, 59)
+        now = now.replace(tzinfo=pytz.timezone("EST"))
+        
+        ancient_time = datetime(1987, 10, 15)
+        ancient_time = ancient_time.replace(tzinfo=pytz.timezone("EST"))
+        ancient = NewsStory('', '', '', '', ancient_time)
+        
+        just_now = NewsStory('', '', '', '', now - dt)
+        in_a_bit = NewsStory('', '', '', '', now + dt)
+        
+        future_time = datetime(2087, 10, 15)
+        future_time = future_time.replace(tzinfo=pytz.timezone("EST"))
+        future = NewsStory('', '', '', '', future_time)
+
+
+        s1 = BeforeTrigger('12 Oct 2016 23:59:59')
+        s2 = AfterTrigger('12 Oct 2016 23:59:59')
+
+        self.assertTrue(s1.evaluate(ancient), "BeforeTrigger failed to fire on news from long ago")
+        self.assertTrue(s1.evaluate(just_now), "BeforeTrigger failed to fire on news happened right before specified time")
+
+        self.assertFalse(s1.evaluate(in_a_bit), "BeforeTrigger fired to fire on news happened right after specified time")
+        self.assertFalse(s1.evaluate(future), "BeforeTrigger fired to fire on news from the future")
+
+        self.assertFalse(s2.evaluate(ancient), "AfterTrigger fired to fire on news from long ago")
+        self.assertFalse(s2.evaluate(just_now), "BeforeTrigger fired to fire on news happened right before specified time")
+
+        self.assertTrue(s2.evaluate(in_a_bit), "AfterTrigger failed to fire on news just after specified time")
+        self.assertTrue(s2.evaluate(future), "AfterTrigger failed to fire on news from long ago")
+
+    def test3BeforeAndAfterTrigger(self):
+
+        dt = timedelta(seconds=5)
+        now = datetime(2016, 10, 12, 23, 59, 59)
+        ancient = NewsStory('', '', '', '', datetime(1987, 10, 15))
+        just_now = NewsStory('', '', '', '', now - dt)
+        in_a_bit = NewsStory('', '', '', '', now + dt)
+        future = NewsStory('', '', '', '', datetime(2087, 10, 15))
+
+        s1 = BeforeTrigger('12 Oct 2016 23:59:59')
+        s2 = AfterTrigger('12 Oct 2016 23:59:59')
+
+        self.assertTrue(s1.evaluate(ancient), "BeforeTrigger failed to fire on news from long ago")
+        self.assertTrue(s1.evaluate(just_now), "BeforeTrigger failed to fire on news happened right before specified time")
+
+        self.assertFalse(s1.evaluate(in_a_bit), "BeforeTrigger fired to fire on news happened right after specified time")
+        self.assertFalse(s1.evaluate(future), "BeforeTrigger fired to fire on news from the future")
+
+        self.assertFalse(s2.evaluate(ancient), "AfterTrigger fired to fire on news from long ago")
+        self.assertFalse(s2.evaluate(just_now), "BeforeTrigger fired to fire on news happened right before specified time")
+
+        self.assertTrue(s2.evaluate(in_a_bit), "AfterTrigger failed to fire on news just after specified time")
+        self.assertTrue(s2.evaluate(future), "AfterTrigger failed to fire on news from long ago")
+
+    def test4NotTrigger(self):
+        n = NotTrigger(self.tt)
+        b = NewsStory("guid", "title", "description", "link", datetime.now())
+
+        self.assertFalse(n.evaluate(b), "A NOT trigger applied to 'always true' DID NOT return false")
+
+        y = NotTrigger(self.ft)
+        self.assertTrue(y.evaluate(b), "A NOT trigger applied to 'always false' DID NOT return true")
+
+    def test5AndTrigger(self):
+        yy = AndTrigger(self.tt, self.tt2)
+        yn = AndTrigger(self.tt, self.ft)
+        ny = AndTrigger(self.ft, self.tt)
+        nn = AndTrigger(self.ft, self.ft2)
+        b = NewsStory("guid", "title", "description", "link", datetime.now())
+
+        self.assertTrue(yy.evaluate(b), "AND of 'always true' and 'always true' should be true")
+        self.assertFalse(yn.evaluate(b), "AND of 'always true' and 'always false' should be false")
+        self.assertFalse(ny.evaluate(b), "AND of 'always false' and 'always true' should be false")
+        self.assertFalse(nn.evaluate(b), "AND of 'always false' and 'always false' should be false")
+
+    def test6OrTrigger(self):
+        yy = OrTrigger(self.tt, self.tt2)
+        yn = OrTrigger(self.tt, self.ft)
+        ny = OrTrigger(self.ft, self.tt)
+        nn = OrTrigger(self.ft, self.ft2)
+        b = NewsStory("guid", "title", "description", "link", datetime.now())
+
+        self.assertTrue(yy.evaluate(b), "OR of 'always true' and 'always true' should be true")
+        self.assertTrue(yn.evaluate(b), "OR of 'always true' and 'always false' should be true")
+        self.assertTrue(ny.evaluate(b), "OR of 'always false' and 'always true' should be true")
+        self.assertFalse(nn.evaluate(b), "OR of 'always false' and 'always false' should be false")
+
+    def test7FilterStories(self):
+        tt = TitleTrigger("New York City")
+        a = NewsStory('', "asfd New York City asfdasdfasdf", '', '', datetime.now())
+        b = NewsStory('', "asdfasfd new york city! asfdasdfasdf", '', '', datetime.now())
+        noa = NewsStory('', "something somethingnew york city", '', '', datetime.now())
+        nob = NewsStory('', "something something new york cities", '', '', datetime.now())
+
+        st = DescriptionTrigger("New York City")
+        a = NewsStory('', '', "asfd New York City asfdasdfasdf", '', datetime.now())
+        b = NewsStory('', '', "asdfasfd new york city! asfdasdfasdf", '', datetime.now())
+        noa = NewsStory('', '', "something somethingnew york city", '', datetime.now())
+        nob = NewsStory('', '', "something something new york cities", '', datetime.now())
+
+        triggers = [tt, st, self.tt, self.ft]
+        stories = [a, b, noa, nob]
+        filtered_stories = filter_stories(stories, triggers)
+        for story in stories:
+            self.assertTrue(story in filtered_stories)
+        filtered_stories = filter_stories(stories, [self.ft])
+        self.assertEqual(len(filtered_stories), 0)
+
+    def test8FilterStories2(self):
+        a = NewsStory('', "asfd New York City asfdasdfasdf", '', '', datetime.now())
+        b = NewsStory('', "asdfasfd new york city! asfdasdfasdf", '', '', datetime.now())
+        noa = NewsStory('', "something somethingnew york city", '', '', datetime.now())
+        nob = NewsStory('', "something something new york cities", '', '', datetime.now())
+
+        class MatchTrigger(Trigger):
+            def __init__(self, story):
+                self.story = story
+            def evaluate(self, story):
+                return story == self.story
+        triggers = [MatchTrigger(a), MatchTrigger(nob)]
+        stories = [a, b, noa, nob]
+        filtered_stories = filter_stories(stories, triggers)
+        self.assertTrue(a in filtered_stories)
+        self.assertTrue(nob in filtered_stories)
+        self.assertEqual(2, len(filtered_stories))
 
 
 if __name__ == "__main__":
